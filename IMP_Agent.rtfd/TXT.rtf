@@ -1,0 +1,54 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1344\cocoasubrtf720
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+
+\f0\fs24 \cf0 /*****************************************************************\
+Phant Imp (Agent)\
+Post data to SparkFun's data stream server system (phant) using\
+an Electric Imp\
+Jim Lindblom @ SparkFun Electronics\
+Original Creation Date: July 7, 2014\
+\
+Description\
+\
+Before uploading this sketch, there are a number of vars that need adjusting:\
+1. Phant Stuff: Fill in your data stream's public, private, and \
+data keys before uploading!\
+\
+This code is beerware; if you see me (or any other SparkFun \
+employee) at the local, and you've found our code helpful, please \
+buy us a round!\
+\
+Distributed as-is; no warranty is given.\
+*****************************************************************/\
+\
+/////////////////\
+// Phant Stuff //\
+/////////////////\
+local publicKey = \'94XXXXX\'94; // Your Phant public key\
+local privateKey = \'94YYYYY\'94; // The Phant private key\
+local phantServer = "data.sparkfun.com"; // Your Phant server, base URL, no HTTP\
+\
+/////////////////////\
+// postData Action //\
+/////////////////////\
+// When the agent receives a "postData" string from the device, use the\
+// dataString string to construct a HTTP POST, and send it to the server.\
+device.on("postData", function(dataString) \{\
+\
+    server.log("Sending " + dataString); // Print a debug message\
+\
+    // Construct the base URL: https://data.sparkfun.com/input/PUBLIC_KEY:\
+    local phantURL = "https://" +  phantServer + "/input/" + publicKey;\
+    // Construct the headers: e.g. "Phant-Priave-Key: PRIVATE_KEY"\
+    local phantHeaders = \{"Phant-Private-Key": privateKey, "connection": "close"\};\
+    // Send the POST to phantURL, with phantHeaders, and dataString data.\
+    local request = http.post(phantURL, phantHeaders, dataString);\
+\
+    // Get the response from the server, and send it out the debug window:\
+    local response = request.sendsync();\
+    server.log("Phant response: " + response.body);\
+\});\
+}

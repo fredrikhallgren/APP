@@ -1,0 +1,66 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1344\cocoasubrtf720
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+
+\f0\fs24 \cf0 /*The Shield connects one of the imp's UARTs (Imp pins 5 and 7) to either the Arduino hardware UART or\
+a software serial on pins 8 and 9. It defaults to the software serial, but there are jumpers on the bottom side \
+to set it to the hardware serial. A couple imp pins (8 & 9) are also connected to LEDs. \
+They can be disconnected via jumpers on the bottom, if you'd like. LEDs are on pins 8 and 9 on the imp Shield. They're both active low, so writing the pin a 1 will turn the LED off\
+Terminate serial string with a "\\n" on the arduino end\
+*/\
+\
+// somewhere to build the string\
+buffer <- "";\
+local temp = 0;\
+local rh = 0;\
+/////////////////\
+// Phant Stuff //\
+/////////////////\
+\
+const FIELD_COUNT = 2; // Number of fields in the stream\
+local fieldNames = ["humidity", "temperature"]; // Exact names of each field\
+\
+// When the callback is called, empty the serial buffer, and output string when a newline is seen\
+function readSerial() \{\
+local result = hardware.uart57.read();\
+while(result >= 0) \{\
+  if (result == '\\n') \{\
+    server.log("temp: "+buffer);\
+    temp=buffer;\
+    buffer="";\
+    \} \
+    else \{\
+      if (result == '\\t') \{\
+        server.log("rh: "+buffer);\
+        rh=buffer;\
+        sendData();\
+        buffer="";\
+        \}\
+    buffer = buffer + result.tochar();\
+  \}\
+  result = hardware.uart57.read();\
+\}\
+\}\
+\
+// Populate fieldData array with respective data values\
+function sendData()\{\
+    local fieldData = [rh, temp];\
+\
+        // Create a data string to send to the agent. Should be of the form:\
+        // "fieldName0=fieldData0&fieldName1=fieldData1&fieldName2=fieldData2"\
+        local data = "";\
+        for (local i=0; i<FIELD_COUNT; i++)\
+        \{\
+            data += fieldNames[i] + "=" + fieldData[i];\
+            if (i < FIELD_COUNT - 1)\
+                data += "&";\
+        \}\
+        server.log("Sending Data!");\
+        agent.send("postData", data);\
+\}\
+        \
+\
+// Init uart with new data callback\
+hardware.uart57.configure(19200, 8, PARITY_NONE, 1, NO_CTSRTS, readSerial);}
